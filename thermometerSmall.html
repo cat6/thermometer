@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <style type="text/css">
+            #content {
+                width:300px;
+                margin:30px auto;
+            }
+            #thermometer {
+                width:40px;
+                height:100px;
+                position: relative;
+                background: #ddd;
+                border:1px solid #aaa;
+                -webkit-border-radius: 12px;
+                -moz-border-radius: 12px;
+                -ms-border-radius: 12px;
+                -o-border-radius: 12px;
+                border-radius: 12px;
+                -webkit-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+                -moz-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+                -ms-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+                -o-box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+                box-shadow: 1px 1px 4px #999, 5px 0 20px #999;
+            }
+            #thermometer .track {
+                height:80px;
+                top:10px;
+                width:20px;
+                border: 1px solid #aaa;
+                position: relative;
+                margin:0 auto;
+                background: rgb(255, 255, 255);
+                /*
+                background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgb(0, 0, 0)), color-stop(1%, rgb(255, 255, 255)));
+                background: -webkit-linear-gradient(top, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 10%);
+                background: -o-linear-gradient(top, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 10%);
+                background: -ms-linear-gradient(top, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 10%);
+                background: -moz-linear-gradient(top, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 10%);
+                background: linear-gradient(to bottom, rgb(0, 0, 0) 0%, rgb(255, 255, 255) 10%);
+                */
+                background-position: 0 -1px;
+                background-size: 100% 5%;
+            }
+            #thermometer .progress {
+                height:0%;
+                width:100%;
+                background: rgb(20, 100, 20);
+                background: red;
+                position: absolute;
+                bottom:0;
+                left:0;
+            }
+            #thermometer .max {
+                position:absolute;
+                top:0;
+            }
+            #thermometer .mid {
+                position:absolute;
+                bottom: 50%;
+            }
+            #thermometer .min {
+                position:absolute;
+                bottom:-25%;
+            }
+            #thermometer .amount {
+                display: inline-block;
+                padding:0 5px 0 35px;
+                border-top:1px solid black;
+                font-family: Trebuchet MS;
+                font-weight: bold;
+                color:#333;
+            }
+            #thermometer .progress .amount {
+                padding:0 35px 0 5px;
+                position: absolute;
+                border-top:1px solid black;
+                color:black;
+                right:0;
+            }
+        </style>
+
+        <title>Thermometer - Positive or Negative values</title>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    </head>
+    <body>
+
+        <div id="content">
+            <div id="thermometer">
+                <div class="track">
+                    <div class="max">
+                        <div class="amount">40</div>
+                    </div>
+                    <div class="mid" style="bottom: 30.5%;">
+                        <div class="amount">0</div>
+                    </div>
+                    <div class="progress" style="height: 38.75%;">
+                        <div class="amount" style="display: block;">
+                            -10
+                        </div>
+                    </div>
+                    <div class="min">
+                        <div class="amount">-30</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+        //Based originally on a positive-only "fundraising" type thermometer by "Geeky John" http://jsfiddle.net/GeekyJohn/vQ4Xn/
+
+        function percentage(goalAmount, minAmount, progressAmount) {
+            var range, compensated, percentageAmount;
+
+            // Convert values to Kelvin and determine where upon the given range of values the temperature lies.
+
+            range = (goalAmount + 274) - (minAmount + 274);
+            compensated = (progressAmount + 274) - (minAmount + 274);
+            percentageAmount = (progressAmount + 274) - (minAmount + 274) / range;
+
+            percentageAmount = compensated / range;
+            percentageAmount = percentageAmount * 100;
+
+            return percentageAmount;
+        }
+        /**
+         * Thermometer Progress meter.
+         * This function will update the progress element in the "thermometer"
+         * to the updated percentage.
+         * If no parameters are passed in it will read them from the DOM
+         *
+         * @param {Number} goalAmount The Goal amount, this represents the 100% mark
+         * @param {Number} progressAmount The progress amount is the current amount
+         * @param {Boolean} animate Whether to animate the height or not
+         *
+         */
+        function thermometer(goalAmount, progressAmount, minAmount, animate) {
+            "use strict";
+
+            var $thermo = $("#thermometer"),
+                $progress = $(".progress", $thermo),
+                $goal = $(".max", $thermo),
+                $min = $(".min", $thermo),
+                $mid = $(".mid", $thermo),
+                percentageAmount, minHeight,
+                compensated, midAmount, range, rangePercent;
+
+            // Adjustment value for the midline marker line (typically the zero on a thermometer)
+            // Change this to move your 'zero' value up or down the thermometer to compensate for size changes
+            var minAdjust = -20;
+
+            // Animate by default
+            var animate = typeof Boolean !== 'undefined' ? animate : true;
+
+            goalAmount = goalAmount || parseFloat($goal.text()),
+            minAmount = minAmount || parseFloat($min.text()),
+            midAmount = midAmount || parseFloat($mid.text()),
+            progressAmount = progressAmount || parseFloat($progress.text()),
+            percentageAmount = Math.min(Math.round(progressAmount / goalAmount * 1000) / 10, 100); //make sure we have 1 decimal point
+
+            //let's format the numbers and put them back in the DOM
+            $goal.find(".amount").text(goalAmount);
+            $progress.find(".amount").text(progressAmount);
+
+            percentageAmount = percentage(goalAmount, minAmount, progressAmount);
+
+            minHeight = percentage(goalAmount, minAmount, 0);
+
+            $("#thermometer .mid").css("bottom", ((minHeight + minAdjust) + "%"));
+
+            //let's set the progress indicator
+            $progress.find(".amount").hide();
+            
+            if (animate !== false) {
+                $progress.animate({
+                    "height": percentageAmount + "%"
+                }, 1200, function () {
+                    $(this).find(".amount").fadeIn(500);
+                });
+            } else {
+                $progress.css({
+                    "height": percentageAmount + "%"
+                });
+                $progress.find(".amount").fadeIn(500);
+            }
+        }
+
+        $(document).ready(function () 
+        {
+            // Call thermometer() without arguments to have it read from the DOM
+            thermometer();
+
+            // ...or with parameters if you want to update it using JavaScript.
+            // You can update live, and choose whether to show the animation
+            // (you might not if the updates are relatively small).
+            //thermometer(50, -21, -30, true);
+        });
+
+        </script>
+    </body>
+</html>
